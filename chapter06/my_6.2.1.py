@@ -6,7 +6,7 @@ sess = tf.Session()
 a = tf.Variable(tf.constant(1.))
 x_val = 5.
 x_data = tf.placeholder(dtype=tf.float32)
-#增加操作到计算图中
+#增加操作到计算图中,multiply用于数值计算
 multiplication = tf.multiply(a,x_data)
 #声明损失函数;输出结果与预期目标值(50)之间的L2距离函数
 loss = tf.square(tf.subtract(multiplication,50.))
