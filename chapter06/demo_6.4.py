@@ -19,7 +19,7 @@ y_vals = np.array([x[3] for x in iris.data])
 sess = tf.Session()
 
 # 3. 因为数据集比较小，我们设置一个种子使得返回结果可复现
-seed = 2
+seed = 5
 tf.set_random_seed(seed)
 np.random.seed(seed)
 
