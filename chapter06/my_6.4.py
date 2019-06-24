@@ -70,6 +70,16 @@ train_step = my_opt.minimize(loss)
 init = tf.initialize_all_variables()
 sess.run(init)
 
-#
+#遍历迭代训练模型，我们也初始化两个列表 存储训练损失和测试损失。在每次迭代训练时，随机选择批量训练数据来拟合模型
+loss_vec = []
+test_loss = []
+
+for i in range(500):
+    rand_index = np.random.choice(len(x_vals_train),size=batch_size)
+
+    rand_x = x_vals_train[rand_index]
+    rand_y = np.transpose([y_vals_train[rand_index]])
+
+    sess.run(train_step,feed_dict={x_data:rand_x,y_target:rand_y})
 
 

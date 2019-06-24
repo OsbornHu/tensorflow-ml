@@ -14,13 +14,19 @@ import numpy as np
 sess = tf.Session()
 
 # 2. 使用requests模块从网站加载数据集，然后分离出需要的特征数据和目标值
-birthdata_url = 'https://www.umass.edu/statdata/statdata/data/lowbwt.dat'
-birth_file = requests.get(birthdata_url)
-birth_data = birth_file.text.split('\r\n')[5:]
+#birthdata_url = 'https://raw.githubusercontent.com/OsbornHu/h2o-2/master/smalldata/logreg/umass_statdata/lowbwt.dat'
+# birthdata_url = ''
+#birth_file = requests.get(birthdata_url)
+file = open('test.dat', 'r')
+
+content = file.read()
+
+birth_data = content.split('\n')[1:]
+
 birth_header = [x for x in birth_data[0].split(' ') if len(x) >= 1]
 birth_data = [[float(x) for x in y.split(' ') if len(x) >= 1] for y in birth_data[1:] if len(y)>=1]
 y_vals = np.array([x[10] for x in birth_data])
-cols_of_interest = ['AGE', 'LMT', 'RACE', 'SMOKE', 'PTL', 'HT', 'UT', 'FTV']
+cols_of_interest = ['AGE', 'LWT', 'RACE', 'SMOKE', 'PTL', 'HT', 'UI', 'FTV']
 x_vals = np.array([[x[ix] for ix, feature in enumerate(birth_header) if feature in cols_of_interest] for x in birth_data])
 
 # 3. 为了后面可以复现，为NumPy和TensorFlow设置随机种子，然后声明批量大小
@@ -34,13 +40,13 @@ train_indices = np.random.choice(len(x_vals), round(len(x_vals)*0.8), replace=Fa
 test_indices = np.array(list(set(range(len(x_vals))) - set(train_indices)))
 x_vals_train = x_vals[train_indices]
 x_vals_test = x_vals[test_indices]
-y_vals_train = y_vals[test_indices]
+y_vals_train = y_vals[train_indices]
 y_vals_test = y_vals[test_indices]
 
 def normalize_cols(m):
     col_max = m.max(axis=0)
     col_min = m.min(axis=0)
-    return (m-col_min)/(col_max-col_min)
+    return (m - col_min)/(col_max-col_min)
 
 x_vals_train = np.nan_to_num(normalize_cols(x_vals_train))
 x_vals_test = np.nan_to_num(normalize_cols(x_vals_test))
@@ -55,12 +61,12 @@ def init_weight(shape, st_dev):
     return (weight)
 
 def init_bias(shape, st_dev):
-    bias = tf.Variable(tf.random_normal(shape, stdev =st_dev))
+    bias = tf.Variable(tf.random_normal(shape, stddev=st_dev))
     return (bias)
 
 # 6. 初始化占位符。本例中将有八个输入特征数据和一个输出结果(出生体重，单位：克)
 x_data = tf.placeholder(shape=[None, 8], dtype=tf.float32)
-y_target = tf.placeholder(shape=[None, 1], dtypet=tf.float32)
+y_target = tf.placeholder(shape=[None, 1], dtype=tf.float32)
 
 # 7. 全连接层将在三个隐藏层中使用三次，为了避免代码上的重复，我们将创建一个层函数来初始化算法模型
 def fully_connected(input_layer, weights, biases):
@@ -111,6 +117,7 @@ for i in range(200):
     rand_index = np.random.choice(len(x_vals_train), size=batch_size)
     # Get random batch
     rand_x = x_vals_train[rand_index]
+
     rand_y = np.transpose([y_vals_train[rand_index]])
     # Run the training step
     sess.run(train_step, feed_dict={x_data: rand_x, y_target: rand_y})

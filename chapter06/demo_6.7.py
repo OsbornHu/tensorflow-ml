@@ -14,13 +14,26 @@ import requests
 sess = tf.Session()
 
 # 2. 加载低出生体重数据集，并对其进行抽取和归一化。有一点不同的是，本例中将使用低出生体重指示变量作为目标值，而不是实际出生体重
-birthdata_url = 'https://www.umass.edu/statdata/statdata/data/lowbwt.dat'
-birth_file = requests.get(birthdata_url)
-birth_data = birth_file.text.split('\r\n')[5:]
+# birthdata_url = 'https://www.umass.edu/statdata/statdata/data/lowbwt.dat'
+# birth_file = requests.get(birthdata_url)
+# birth_data = birth_file.text.split('\r\n')[5:]
+file = open('test.dat', 'r')
+
+content = file.read()
+
+birth_data = content.split('\n')[1:]
+
 birth_header = [x for x in birth_data[0].split(' ') if len(x) >= 1]
 birth_data = [[float(x) for x in y.split(' ') if len(x) >= 1] for y in birth_data[1:] if len(y)>=1]
-y_vals = np.array(x[1] for x in birth_data)
-x_vals = np.array(x[2:9] for x in birth_data)
+
+y_vals = np.array([x[1] for x in birth_data])
+cols_of_interest = ['AGE', 'RACE', 'SMOKE', 'PTL', 'HT', 'UI', 'FTV']
+x_vals = np.array([[x[ix] for ix, feature in enumerate(birth_header) if feature in cols_of_interest] for x in birth_data])
+
+# y_vals = np.array([x[1] for x in birth_data])
+# x_vals = np.array([x[2:9] for x in birth_data])
+
+
 train_indices = np.random.choice(len(x_vals), round(len(x_vals)*0.8), replace=False)
 test_indices = np.array(list(set(range(len(x_vals))) - set(train_indices)))
 x_vals_train = x_vals[train_indices]
@@ -35,7 +48,7 @@ def normailze_cols(m):
 
 # 3. 声明批量大小和占位符
 batch_size = 90
-x_data = tf.placeholder(shape=[None, 8], dtype=tf.float32)
+x_data = tf.placeholder(shape=[None, 7], dtype=tf.float32)
 y_target = tf.placeholder(shape=[None, 1], dtype=tf.float32)
 
 # 4. 我们声明函数来初始化算法模型中的变量和层。为了创建一个更好的逻辑层，我们需要创建一个返回输入层的逻辑层的函数。换句话说，我们需要使用全连接 层，返回每层的值。注意，损失函数包括最终的sigmoid函数，所以我们指定最后一层不必返回输出的sigmoid值
@@ -66,7 +79,7 @@ final_output = logistic(logistic_layer2, A3, b3, activation=False)
 
 # 6. 声明损失函数(本例中使用的是交叉熵损失函数)和优化算法，并初始化变量
 # Create loss function
-loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(final_output, y_target))
+loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=final_output, labels=y_target))
 # Declare optimizer
 my_opt = tf.train.AdamOptimizer(learning_rate= 0.002)
 train_step = my_opt.minimize(loss)
